@@ -1,0 +1,145 @@
+# 네이버 블로그 스마트 매트 리뷰 크롤링
+# ------------------2024-07-07
+# -----------------made by 서연
+
+import pandas as pd
+import time
+from bs4 import BeautifulSoup as bs
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from tqdm import tqdm
+from konlpy.tag import Okt
+
+driver = webdriver.Chrome()
+driver.get("https://m.search.naver.com/search.naver?sm=mtb_sug.top&where=m&ssc=tab.m.all&oquery=%EC%8A%A4%EB%A7%88%ED%8A%B8+%EB%A7%A4%ED%8A%B8&tqi=iooSKdprfjlss6leMvhssssssrK-290860&query=%EC%BD%94%EC%9B%A8%EC%9D%B4+%EC%8A%A4%EB%A7%88%ED%8A%B8+%EB%A7%A4%ED%8A%B8%EB%A6%AC%EC%8A%A4&acq=%EC%BD%94%EC%9B%A8%EC%9D%B4+%EC%8A%A4%EB%A7%88%ED%8A%B8&acr=1&qdt=0#lb_api=https%3A%2F%2Fs.search.naver.com%2Fp%2Freview%2F48%2Fsearch.naver%3Fssc%3Dtab.m_itb.all%26api_type%3D2%26query%3D%25EC%25BD%2594%25EC%259B%25A8%25EC%259D%25B4%2B%25EC%258A%25A4%25EB%25A7%2588%25ED%258A%25B8%2B%25EB%25A7%25A4%25ED%258A%25B8%25EB%25A6%25AC%25EC%258A%25A4%26start%3D1%26nx_search_query%3D%26nx_and_query%3D%26nx_sub_query%3D%26ac%3D0%26aq%3D0%26spq%3D0%26sm%3Dmtb_sug.top%26nso%3D%26prank%3D0%26ngn_country%3DKR%26lgl_rcode%3D09320106%26fgn_region%3D%26fgn_city%3D%26lgl_lat%3D37.664176%26lgl_long%3D127.040725%26enlu_query%3DIggCADCBULi5AAAAtdoURqXUdp9ygLuVMM8qJq9%252FjVYkp7UmMmJXGGRSrOICtncReQelg4rSeHUhjhfTnT3XVJH9vsNm9WWbH%252B7AwAyfB1z3GhhcTnFs%252FYePqfC%252BXclRAgGfbnqa018Pgbd6AOMwJtiS9VTDv0TmfkOFnb0m12KMG4sQCREPQC74Jqhqc8AYd9YNGVBlt6JTFher9kJZTRlBTnEWcmcbFTIhcGRkrVRYOuV0C4jpyVeFzhdWvI%252BwiPGpK59XBs2%252F0sl60gdocYRDPCH6E1QGL80Fag7GzRbv%252B1fKKY4kBhKeKzBA5lda2WeyP5806hIpyLrOovYYAFg3hda3hi5v%252BCTLWjW%252BjHOd7Sif5NGv3l8HINWvqMjc8YHLGFL5fZyCpQ1tWUpVE2swF3NhIsYfj1VbktvXGaRuSKwGNh3C0jhgAxvOlZycaHZd6ykVYcE27EBDkjqcXLwIWn%252FXwDvWpn0numjltSLcF%252F0gak5QtWjz86%252FO4Kc5rDYlQG8SIF1yrmh%252FvPc1CnI%252FdHwLGsPHcCzSIwNVRkrzKDhWqR6p53yPTvVTd1qOG2OaK0jmMPhjoiCzxed396nNHdMxsex15mKqNb2Ca6D1igVyzSigshm3HXLgLy5wVUnmGU2oRCC2l34LO57ykpMVkE9P9ltSBgz2a%252BQyz%252Beo5m5wjxv%252Ftry3rHs8leH93Q4yrkyhAFve9fQTtojzACNHxyuQo5IwPlXcP8198vqvTvMpCkwj3uu61dPTtNe3Tu1TEeyKsorLU3sxUf8ZrxYccuZFUDZ0TJHM95QQG9jAkdmmLi9SYRpT%252B4dcD0g96%252B1fQMDbpgY%252BpcIE1RslkWaiiGiOP3J3%252BOZGmMEotonZ7m7rbgIiS2oMQ%252BkR%252BICY2abiKcD25ngwHpwQXbXmm%252FEnEYFsLC8FOCnEYMSAsdI2Fgtod6y8C627ystRJNtfPpTyCQBMsamfw11xhUlZyX2b5ckIFWky1IgUDh3IU97USgpXqwknoz40W6O4tc8kXcLbT3850j2QU%252B035q60OM94OtOj5lrwIK2sqoxrJAVVtJo45GCmoYXmN%252FM%253D%26abt%3D")
+soup  = bs(driver.page_source, 'lxml')
+
+# 페이지 스크롤링
+body = driver.find_element(By.CSS_SELECTOR, "body")
+
+while True:
+    last = bs(driver.page_source, 'lxml')
+    
+    for i in range(10):
+        body.send_keys(Keys.END)
+        time.sleep(1)
+        
+    new = bs(driver.page_source, 'lxml')
+    if last == new:
+        break
+    else:
+        pass
+
+# 블로그 링 크롤링
+search = soup.select('a.title_link')
+
+url_list = []
+for i in search:
+    url_list.append(i['href'])
+
+# 블로그 제목, 내용 크롤
+title_list=[]
+contents_list = []
+
+for url in tqdm(url_list):
+    driver.get(url)
+    time.sleep(0.5)
+    try:
+        title = driver.find_element(By.CSS_SELECTOR, "div.se-module.se-module-text.se-title-text")
+        title_list.append(title.text)
+        
+        soup  = bs(driver.page_source, 'lxml')
+        contents = soup.select_one('div.se-main-container')
+        contents_list.append(contents.text)
+    except:
+        pass
+
+# 데이터 전처리
+cleaned_contents_list = []
+
+for content in contents_list:
+    # 공백 및 줄바꿈 제거
+    cleaned_content = content.strip()  # 양쪽 공백 제거
+    
+    # 연속된 공백을 단일 공백으로 변환
+    cleaned_content = ' '.join(cleaned_content.split())
+    
+    cleaned_contents_list.append(cleaned_content)
+
+# 불용어 제거, 형용사 추
+okt = Okt()
+
+stopwords = ['있다', '되다', '하다', '나', '는', '은', '이', '가', '을', '를', '에', '에서', 
+             '에게', '한테', '과', '와', '아', '랑', '으로', '로', '께서', '이나', '이라', '이야', 
+             '인가', '이야말로', '그리고', '그런데', '그래서', '그래도', '그러나', '그럼에도', '그러면', 
+             '그러니까', '그러므로', '그러니까', '그렇게', '그렇지만', '그렇다면', '아니면', '아니라', 
+             '그런', '이런', '그렇지', '그래', '저런', '이러한', '그러한', '저러한', '어떤', '이따', 
+             '이래', '이렇게', '저렇게', '그따', '그래서', '아무', '전부', '가지', '갖고', '몇', 
+             '무슨', '어느', '몇몇', '어떤', '어떻게', '어떤', '아무', '나', '우리', '당신', '자기', 
+             '그녀', '저희', '하다', '되다', '않다', '없다', '있다', '되어다', '하고', '그러면', 
+             '그래서', '이렇게', '저렇게', '요즘', '그것', '이것', '저것', '있다고', '그렇지만', '그래도'
+            '코웨이', '안녕하세요', '웅진코웨이', '\u200b', '이다', '안녕하다', '아니다', '같다']
+
+def okt_pos_tagging(string):
+    pos_words = okt.pos(string, stem=True, norm=True)
+    words = [word for word, tag in pos_words if tag in ['Adjective'] if word not in stopwords ]
+    return words
+
+# 추출된 단어들을 저장할 리스트
+extracted_words_list = []
+
+# cleaned_contents_list에 있는 각 텍스트에 대해 okt_pos_tagging 함수 호출하여 추출된 단어들을 리스트에 저장
+for text in cleaned_contents_list:
+    extracted_words = okt_pos_tagging(text)
+    extracted_words_list.append(extracted_words)
+
+# 저장된 추출된 단어들 리스트 출력
+for idx, extracted_words in enumerate(extracted_words_list, start=1):
+    print(f"추출된 단어들: {extracted_words}")
+    print()
+
+# 데이터 프레임 제작
+data = {"블로그 제목" : title_list, "블로그 내용" : cleaned_contents_list, "추출된 단어" : extracted_words_list}
+blog = pd.DataFrame(data)
+
+# 피클 파일로 저장
+pickle_file = 'blog.pkl'
+blog.to_pickle(pickle_file)
+
+# 워드 클라우드 제작
+from wordcloud import WordCloud
+from collections import Counter
+import matplotlib.pyplot as plt
+
+count_list = []
+
+for words in extracted_words_list:
+    count  = Counter(words)
+    count.most_common(100) 
+    count_list.append(count)
+
+# 모든 Counter 객체를 합치기
+total_counter = Counter()
+for counter in count_list:
+    total_counter += counter
+
+from wordcloud import WordCloud
+
+# 한글 폰트 경로 설정
+font_path = '/Users/kimseoyeon/Downloads/The_Jamsil_OTF_2024/The Jamsil OTF 5 Bold.otf'
+
+# WordCloud 객체 생성
+wordcloud = WordCloud(font_path=font_path,
+                      width=700, 
+                      height=700, 
+                      background_color='white',
+                      colormap='spring',
+                      random_state=1).generate_from_frequencies(total_counter)
+
+# 시각화
+plt.figure(figsize=(6,6))
+plt.imshow(wordcloud)
+plt.axis("off")
+plt.title("Word Frequency", size = 13) 
+plt.show
